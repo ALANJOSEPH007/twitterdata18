@@ -1,0 +1,43 @@
+import tweepy
+from textblob import TextBlob
+import pandas as pd
+import re
+
+# Twitter API credentials
+consumer_key = 'your_consumer_key'
+consumer_secret = 'your_consumer_secret'
+access_token = 'your_access_token'
+access_token_secret = 'your_access_token_secret'
+
+# Set up tweepy API
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_token_secret)
+api = tweepy.API(auth)
+
+# Function to clean tweet text
+def clean_tweet(tweet):
+    tweet = re.sub(r'@[A-Za-z0-9_]+', '', tweet)  # Removing @mentions
+    tweet = re.sub(r'https?://[A-Za-z0-9./]+', '', tweet)  # Removing URLs
+    tweet = re.sub(r'[^a-zA-Z]', ' ', tweet)  # Removing special characters and numbers
+    return tweet.lower()
+
+# Function to analyze sentiment
+def analyze_sentiment(tweet):
+    analysis = TextBlob(tweet)
+    if analysis.sentiment.polarity > 0:
+        return 'Positive'
+    elif analysis.sentiment.polarity < 0:
+        return 'Negative'
+    else:
+        return 'Neutral'
+
+# Collect tweets
+tweets = api.search_tweets(q="Data Science", count=100)
+data = pd.DataFrame([tweet.text for tweet in tweets], columns=['Tweet'])
+
+# Clean and analyze tweets
+data['Cleaned_Tweet'] = data['Tweet'].apply(clean_tweet)
+data['Sentiment'] = data['Cleaned_Tweet'].apply(analyze_sentiment)
+
+# Display sentiment counts
+print(data['Sentiment'].value_counts())
